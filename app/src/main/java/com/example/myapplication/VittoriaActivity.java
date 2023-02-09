@@ -47,10 +47,6 @@ public class VittoriaActivity extends AppCompatActivity {
             p.idUserWinner = userSession.USER_UID;
 
             Common.updatePartita(p);
-        }else{
-            finish();
-            Toast t = Toast.makeText(context, "Errore, non gestito", Toast.LENGTH_SHORT);
-            t.show();
         }
     }
 }

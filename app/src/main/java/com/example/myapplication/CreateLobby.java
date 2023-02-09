@@ -71,6 +71,7 @@ public class CreateLobby extends AppCompatActivity {
             return;
         }
         p.stato = 0; //stiamo avviando la partita
+        p.numeroEstratto = 0;
         DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         p.dataStart = dt.format(LocalDateTime.now());
         p.idUser = userSession.USER_UID; //id di chi crea la partita
@@ -82,6 +83,7 @@ public class CreateLobby extends AppCompatActivity {
         dbPartite.add(p).addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
             @Override
             public void onComplete(Task<DocumentReference> task) {
+                Common.caricaPartite(0, null);
                 Toast t = Toast.makeText(getApplicationContext(), "Partita creata con successo: " + userSession.USER_UID, Toast.LENGTH_SHORT);
                 t.show();
                 //dobbiamo nascondere loader......

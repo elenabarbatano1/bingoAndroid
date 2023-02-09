@@ -31,7 +31,8 @@ public class UserSession {
     //ritorno la partita appena creata o in corso (stato 0-1)
     public Partita getPartita(){
         for(Partita p : partiteLista){
-            if(p.idPartita != null && (p.stato == 0 || p.stato == 1)){
+            //if(p.idPartita != null && (p.stato == 0 || p.stato == 1)){
+            if(p.idUser != null && (p.stato == 0 || p.stato == 1)){
                 return p;
             }
         }
@@ -41,6 +42,7 @@ public class UserSession {
     public void addPartita(Partita p){
         partiteLista.add(p);
     }
+
     public boolean isAdmin(){
         Partita p = getPartita();
         if(p!= null && p.idUser.equals(USER_UID)){

@@ -57,10 +57,6 @@ public class PerditaActivity extends AppCompatActivity {
             p.idUserWinner = userSession.isAdmin() ? userSession.USER_UID :  p.idUser;
 
             Common.updatePartita(p);
-        }else{
-            finish();
-            Toast t = Toast.makeText(context, "Errore, non gestito", Toast.LENGTH_SHORT);
-            t.show();
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.example.myapplication;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
@@ -21,16 +20,13 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.List;
 
@@ -53,6 +49,17 @@ public class GameActivity extends AppCompatActivity {
         setTitle("Game");
         // Initialize user session
         userSession = UserSession.getInstance();
+        context = getApplicationContext(); //abbiamo il contesto
+
+       /* Partita p1 = userSession.getPartita();;
+        if(p1!= null && p1.idUser.equals(userSession.USER_UID)){
+            Toast.makeText(context, "user id "+ userSession.getPartita().stato + " "+ userSession.isAdmin(),
+                    Toast.LENGTH_LONG).show();
+        }else{
+            Toast.makeText(context, ""+ userSession.getPartita().idUser + "\n\r"+ userSession.USER_UID,
+                    Toast.LENGTH_LONG).show();
+        }*/
+
         if (userSession.isAdmin()) {
             setContentView(R.layout.activity_game_admin);
         } else {
@@ -64,7 +71,6 @@ public class GameActivity extends AppCompatActivity {
             }
 
         }
-        context = getApplicationContext(); //abbiamo il contesto
 
         if (userSession.getPartita() == null) {
             finish();//chiude activity
@@ -75,49 +81,47 @@ public class GameActivity extends AppCompatActivity {
         userSession.numeriCartellaLista.clear();
 
         Partita p = userSession.getPartita();
-        //LETTURA
+        //Listener della vittoria o perdita
         FirebaseFirestore database = FirebaseFirestore.getInstance();
         DocumentReference docRef = database.collection("Partite").document(p.idPartita);
         docRef.addSnapshotListener(new EventListener<DocumentSnapshot>() {
-                @Override
-                public void onEvent(@Nullable DocumentSnapshot snapshot, @Nullable FirebaseFirestoreException error) {
-                    //Toast.makeText(context, "onEvent", Toast.LENGTH_SHORT).show();
-                    if (e != null) {
-                        System.err.println("Listen failed: " + e);
-                        return;
-                    }
-
-                    if (snapshot != null && snapshot.exists()) {
-                        System.out.println("Current data: " + snapshot.getData());
-                    } else {
-                        System.out.print("Current data: null");
-                    }
-                }
-            });
-
-        /*
-        dbPartite.whereEqualTo("stato", stato).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
-            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                List<DocumentSnapshot> partiteLista = queryDocumentSnapshots.getDocuments();
-                List<Partita> listaP = new ArrayList<Partita>();
-                for (DocumentSnapshot d : partiteLista) { //itero sui documenti
-                    Partita p1 = d.toObject(Partita.class);
-                    p1.idPartita = d.getId(); //ci prendiamo l'id della partita
+            public void onEvent(@Nullable DocumentSnapshot snapshot, @Nullable FirebaseFirestoreException e) {
+                //Toast.makeText(context, "onEvent", Toast.LENGTH_SHORT).show();
+                if (e != null) {
+                    System.err.println("Listen failed: " + e);
+                    return;
+                }
 
-                    listaP.add(p1);
+                if (snapshot != null && snapshot.exists()) {
+                    Partita partitaInCorso = snapshot.toObject(Partita.class);
+                    //System.out.println("Current data: " + snapshot.getData()); //manda tutto il documento o quello modificato
+                   // Toast.makeText(context, "onEvent: "+partitaInCorso.idUserWinner, Toast.LENGTH_LONG).show();
+                    if(partitaInCorso.stato == 2){
+                        if(userSession.USER_UID.equals(partitaInCorso.idUserWinner)){
+                            finish();
+                            //mostro activity vittoria
+                            Intent i = new Intent(context, VittoriaActivity.class);
+                            startActivity(i);
+                        } else {
+                            finish();
+                            //mostro activity di perdita
+                            Intent i = new Intent(context, PerditaActivity.class);
+                            startActivity(i);
+                        }
+                    } else if(!userSession.isAdmin() && partitaInCorso.numeroEstratto > 0){
+                        int val = partitaInCorso.numeroEstratto;
+                        textViewNumeroEstratto = findViewById(R.id.textViewNumeroEstratto);
+                        textViewNumeroEstratto.setText(""+ val);
+                    }
+                } else {
+                    //System.out.print("Current data: null");
                 }
-                if (pbAttesa != null) {
-                    pbAttesa.setVisibility(View.INVISIBLE);
-                }
-                storicoPartiteLista = listaP; //mi salvo tutte le partite
-                initTable();
             }
         });
-        */
 
         initTable();
-         auto = findViewById(R.id.auto);
+        auto = findViewById(R.id.auto);
         if (auto != null) {
             auto.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -160,7 +164,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
     public void onClickEstraiNumero(View view) {
-        if (!userSession.isAdmin()) {
+        if (userSession.isAdmin()) {
             textViewNumeroEstratto = findViewById(R.id.textViewNumeroEstratto);
             if(userSession.numeriTrovatiInCartellaLista.size() < userSession.numeriCartellaLista.size()) {
                 int val = Common.generateRandom(1, 90);
@@ -169,8 +173,15 @@ public class GameActivity extends AppCompatActivity {
                 textViewNumeroEstratto.setText(val + "");
                 //aggiungere marker sulla tabella dei numeri
                 refreshTable();
-                textViewStatus = findViewById(R.id.textViewStatus);
-                textViewStatus.setText(userSession.numeriTrovatiInCartellaLista.size() + " / " + userSession.numeriCartellaLista.size());
+                //textViewStatus = findViewById(R.id.textViewStatus);
+                //textViewStatus.setText(userSession.numeriTrovatiInCartellaLista.size() + " / " + userSession.numeriCartellaLista.size());
+
+                //lancio update di firebase
+                Partita p = userSession.getPartita(); //da la partita in corso
+                p.numeroEstratto = val;
+                if(val > 0){
+                    Common.updatePartita(p);
+                }
             }else{
                 onClickBingo(null);
             }
