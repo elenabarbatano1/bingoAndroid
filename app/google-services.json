@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "246678057771",
+    "firebase_url": "https://bingogalattico-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "bingogalattico",
+    "storage_bucket": "bingogalattico.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:246678057771:android:2d530e69b6fb69147c8b6e",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "246678057771-5bvad4c6rfu42mhatscuot5tn5jd7taa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7jksvrKGuzUrA8-ZeGAlavpjcnqlhp4U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "246678057771-5bvad4c6rfu42mhatscuot5tn5jd7taa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

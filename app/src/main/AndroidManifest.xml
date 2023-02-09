@@ -10,6 +10,27 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
         <activity
+            android:name=".PerditaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".VittoriaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RegoleActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity_attesa"
+            android:exported="false" />
+        <activity
+            android:name=".DashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CreateLobby"
+            android:exported="false" />
+        <activity
+            android:name=".GameActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
