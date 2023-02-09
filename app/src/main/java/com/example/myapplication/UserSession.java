@@ -43,7 +43,7 @@ public class UserSession {
     }
     public boolean isAdmin(){
         Partita p = getPartita();
-        if(p!= null && p.idUser == USER_UID){
+        if(p!= null && p.idUser.equals(USER_UID)){
             return true;
         }
         return false;

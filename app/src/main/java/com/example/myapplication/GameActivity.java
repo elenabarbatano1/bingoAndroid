@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
@@ -19,6 +20,17 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.List;
 
@@ -42,7 +54,7 @@ public class GameActivity extends AppCompatActivity {
         // Initialize user session
         userSession = UserSession.getInstance();
         if (userSession.isAdmin()) {
-            setContentView(R.layout.activity_prova);
+            setContentView(R.layout.activity_game_admin);
         } else {
             setContentView(R.layout.activity_game);
             Partita p = userSession.getPartita();
@@ -61,6 +73,48 @@ public class GameActivity extends AppCompatActivity {
         userSession.numeriChiamatiLista.clear();
         userSession.numeriTrovatiInCartellaLista.clear();
         userSession.numeriCartellaLista.clear();
+
+        Partita p = userSession.getPartita();
+        //LETTURA
+        FirebaseFirestore database = FirebaseFirestore.getInstance();
+        DocumentReference docRef = database.collection("Partite").document(p.idPartita);
+        docRef.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                @Override
+                public void onEvent(@Nullable DocumentSnapshot snapshot, @Nullable FirebaseFirestoreException error) {
+                    //Toast.makeText(context, "onEvent", Toast.LENGTH_SHORT).show();
+                    if (e != null) {
+                        System.err.println("Listen failed: " + e);
+                        return;
+                    }
+
+                    if (snapshot != null && snapshot.exists()) {
+                        System.out.println("Current data: " + snapshot.getData());
+                    } else {
+                        System.out.print("Current data: null");
+                    }
+                }
+            });
+
+        /*
+        dbPartite.whereEqualTo("stato", stato).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                List<DocumentSnapshot> partiteLista = queryDocumentSnapshots.getDocuments();
+                List<Partita> listaP = new ArrayList<Partita>();
+                for (DocumentSnapshot d : partiteLista) { //itero sui documenti
+                    Partita p1 = d.toObject(Partita.class);
+                    p1.idPartita = d.getId(); //ci prendiamo l'id della partita
+
+                    listaP.add(p1);
+                }
+                if (pbAttesa != null) {
+                    pbAttesa.setVisibility(View.INVISIBLE);
+                }
+                storicoPartiteLista = listaP; //mi salvo tutte le partite
+                initTable();
+            }
+        });
+        */
 
         initTable();
          auto = findViewById(R.id.auto);
