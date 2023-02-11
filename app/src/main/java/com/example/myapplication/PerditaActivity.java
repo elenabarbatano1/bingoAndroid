@@ -47,14 +47,13 @@ public class PerditaActivity extends AppCompatActivity {
 
     @TargetApi(Build.VERSION_CODES.O)
     public void update() {
-
         Partita p = userSession.getPartita(); //ci da la partita in corso
-        if(p != null) {
-
+        if (p != null) {
             DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
             p.dataEnd = dt.format(LocalDateTime.now()); //cambiamo data
             p.stato = 2; //cambiamo stato
-            p.idUserWinner = userSession.isAdmin() ? userSession.USER_UID :  p.idUser;
+            if (p.giocatori.size() > 1)
+                p.idUserWinner = userSession.isAdmin() ? userSession.USER_UID :  p.idUser;
 
             Common.updatePartita(p);
         }

@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
             btnStart.setVisibility(View.INVISIBLE); //rende invisibile il pulsante LOGIN
         }
 
-        Common.caricaPartite(0, pbAttesa);
+        Common.caricaPartiteInCorso(pbAttesa);
     }
 
     //metodo per il login dell'utente, non serve nome e password
@@ -93,17 +93,29 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    public void onClickCercaPartita(View view) {
-        if (userSession.partiteLista.size() > 0 && userSession.getPartita().stato != 2 && userSession.getPartita().stato != -1) {
-            Intent i = new Intent(context, GameActivity.class);
-            startActivity(i);
-            //Toast t = Toast.makeText(context, "La partita è stata trovata", Toast.LENGTH_SHORT);
-            //t.show();
-        } else {
-            Toast t = Toast.makeText(context, "Errore, nessuna partita trovata", Toast.LENGTH_SHORT);
-            t.show();
-            Common.caricaPartite(0, null);
+    public void onClickCercaPartita(View view) 
+    {
+        Partita p = userSession.getPartita(); // da la partita in corso
+        if (p == null || userSession.partiteLista.size() == 0 || (p.stato == 2 || p.stato == -1)) {
+            Toast.makeText(context, "Errore, nessuna partita trovata", Toast.LENGTH_LONG).show();
+            Common.caricaPartiteInCorso(null);
+            return;
         }
+
+        // check numero massimo giocatori...
+        if (p.giocatori.size() > GlobalConstant.MAX_GIOCATORI) {
+            Toast.makeText(context, "Errore, numero massimo di giocatori superato. Attenti la conclusione della partita!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // check partita già iniziata. Lo capisco se è stato estratto almeno un numero e che ci siano minimo due giocatori!
+        if (p.giocatori.size() >= GlobalConstant.MIN_GIOCATORI && p.numeroEstratto > 0) {
+            Toast.makeText(context, "Errore, la partita è già in corso. Attenti la conclusione della partita!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Intent i = new Intent(context, GameActivity.class);
+        startActivity(i);
     }
 
     public void onClickCreaPartita(View view) {

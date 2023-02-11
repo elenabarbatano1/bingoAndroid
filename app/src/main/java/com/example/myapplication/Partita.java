@@ -15,6 +15,7 @@ public class Partita {
     public String dataStart; //dataora inizio
     public String dataEnd;//dataora fine
     public int numeroEstratto; //numero estratto che aggiorno su firebase
+    public String username;//username utente...
 
     public Partita(){
         giocatori  = new ArrayList<String>();

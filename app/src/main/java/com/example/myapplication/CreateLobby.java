@@ -75,6 +75,7 @@ public class CreateLobby extends AppCompatActivity {
         DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         p.dataStart = dt.format(LocalDateTime.now());
         p.idUser = userSession.USER_UID; //id di chi crea la partita
+        p.username = "Miky";
         p.giocatori.add(p.idUser); //mi salvo i giocatori
         userSession.addPartita(p); //gli settiamo la partita in corso
 
@@ -83,9 +84,8 @@ public class CreateLobby extends AppCompatActivity {
         dbPartite.add(p).addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
             @Override
             public void onComplete(Task<DocumentReference> task) {
-                Common.caricaPartite(0, null);
-                Toast t = Toast.makeText(getApplicationContext(), "Partita creata con successo: " + userSession.USER_UID, Toast.LENGTH_SHORT);
-                t.show();
+                Common.caricaPartiteInCorso(null);
+                Toast.makeText(getApplicationContext(), "Partita creata con successo: " + userSession.USER_UID, Toast.LENGTH_SHORT).show();
                 //dobbiamo nascondere loader......
                 finish();
             }

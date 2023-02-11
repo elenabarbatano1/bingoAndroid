@@ -2,7 +2,9 @@ package com.example.myapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -28,6 +30,8 @@ import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class GameActivity extends AppCompatActivity {
@@ -51,15 +55,6 @@ public class GameActivity extends AppCompatActivity {
         userSession = UserSession.getInstance();
         context = getApplicationContext(); //abbiamo il contesto
 
-       /* Partita p1 = userSession.getPartita();;
-        if(p1!= null && p1.idUser.equals(userSession.USER_UID)){
-            Toast.makeText(context, "user id "+ userSession.getPartita().stato + " "+ userSession.isAdmin(),
-                    Toast.LENGTH_LONG).show();
-        }else{
-            Toast.makeText(context, ""+ userSession.getPartita().idUser + "\n\r"+ userSession.USER_UID,
-                    Toast.LENGTH_LONG).show();
-        }*/
-
         if (userSession.isAdmin()) {
             setContentView(R.layout.activity_game_admin);
         } else {
@@ -69,16 +64,22 @@ public class GameActivity extends AppCompatActivity {
             if(aggiunto){
                 Common.updatePartita(p);
             }
-
         }
 
         if (userSession.getPartita() == null) {
             finish();//chiude activity
             return;
         }
+
+        textViewNumeroEstratto = findViewById(R.id.textViewNumeroEstratto);
+        auto = findViewById(R.id.auto);
+        tableCartella = findViewById(R.id.tableCartella);
+
         userSession.numeriChiamatiLista.clear();
         userSession.numeriTrovatiInCartellaLista.clear();
         userSession.numeriCartellaLista.clear();
+
+        initTable();
 
         Partita p = userSession.getPartita();
         //Listener della vittoria o perdita
@@ -93,7 +94,7 @@ public class GameActivity extends AppCompatActivity {
                     return;
                 }
 
-                if (snapshot != null && snapshot.exists()) {
+                if (snapshot != null && snapshot.exists() && status == "") {
                     Partita partitaInCorso = snapshot.toObject(Partita.class);
                     //System.out.println("Current data: " + snapshot.getData()); //manda tutto il documento o quello modificato
                    // Toast.makeText(context, "onEvent: "+partitaInCorso.idUserWinner, Toast.LENGTH_LONG).show();
@@ -111,7 +112,6 @@ public class GameActivity extends AppCompatActivity {
                         }
                     } else if(!userSession.isAdmin() && partitaInCorso.numeroEstratto > 0){
                         int val = partitaInCorso.numeroEstratto;
-                        textViewNumeroEstratto = findViewById(R.id.textViewNumeroEstratto);
                         textViewNumeroEstratto.setText(""+ val);
                     }
                 } else {
@@ -120,8 +120,6 @@ public class GameActivity extends AppCompatActivity {
             }
         });
 
-        initTable();
-        auto = findViewById(R.id.auto);
         if (auto != null) {
             auto.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -133,18 +131,15 @@ public class GameActivity extends AppCompatActivity {
                         //DOBBIAMO FARE UN METODO PERCHè VA RICHIAMATO OGNI VOLTA
                         //while(userSession.numeriCartellaLista.size()>= userSession.numeriChiamatiLista.size()){
                         long tempoFinePartita = 300 * 1000; //sono 5 minuti
-                         textViewNumeroEstratto = findViewById(R.id.textViewNumeroEstratto);
-                        //TextView textViewStatus = findViewById(R.id.textViewStatus);
+
                         CountDownTimer timer = new CountDownTimer(tempoFinePartita, 600) {
                             public void onTick(long millisUntilFinished) {
                                 if (userSession.numeriTrovatiInCartellaLista.size() == userSession.numeriCartellaLista.size()) {
-                                    status = "WINNER";
                                     this.cancel();
                                     onClickBingo(null);
                                     return;
                                 }
                                 onClickEstraiNumero(null);
-                                //textViewStatus.setText(userSession.numeriTrovatiInCartellaLista.size()+" / "+ userSession.numeriCartellaLista.size());
                             }
 
                             public void onFinish() {
@@ -158,14 +153,58 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    public void onClickHome(View view) {
+    @Override
+    public void onBackPressed() {
+        Partita p = userSession.getPartita(); //da la partita in corso
+        if (p.giocatori.size() <= 1) {
+            //finish();
+            super.onBackPressed();
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+        builder.setMessage("Uscendo perderai la partita. Sei sicuro di voler uscire?");
+        builder.setPositiveButton("SI", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //if user pressed "yes", then he is allowed to exit from application
+                finish();
+
+                //Partita p = userSession.getPartita(); //ci da la partita in corso
+                if (p != null) {
+                    DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                    p.dataEnd = dt.format(LocalDateTime.now()); //cambiamo data
+                    p.stato = -1; //cambiamo stato
+                    Common.updatePartita(p);
+                }
+            }
+        });
+        builder.setNegativeButton("NO",new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //if user select "No", just cancel this dialog and continue with app
+                dialog.cancel();
+            }
+        });
+        AlertDialog alert=builder.create();
+        alert.show();
+    }
+
+    public void onClickHome(View view)
+    {
+        Partita p = userSession.getPartita(); //da la partita in corso
+        if (p.giocatori.size() > 1) {
+            onBackPressed();
+            return;
+        }
+
         Intent i = new Intent(context, MainActivity.class);
         startActivity(i);
     }
 
     public void onClickEstraiNumero(View view) {
         if (userSession.isAdmin()) {
-            textViewNumeroEstratto = findViewById(R.id.textViewNumeroEstratto);
             if(userSession.numeriTrovatiInCartellaLista.size() < userSession.numeriCartellaLista.size()) {
                 int val = Common.generateRandom(1, 90);
                 numEstratto = val;
@@ -173,8 +212,6 @@ public class GameActivity extends AppCompatActivity {
                 textViewNumeroEstratto.setText(val + "");
                 //aggiungere marker sulla tabella dei numeri
                 refreshTable();
-                //textViewStatus = findViewById(R.id.textViewStatus);
-                //textViewStatus.setText(userSession.numeriTrovatiInCartellaLista.size() + " / " + userSession.numeriCartellaLista.size());
 
                 //lancio update di firebase
                 Partita p = userSession.getPartita(); //da la partita in corso
@@ -189,11 +226,13 @@ public class GameActivity extends AppCompatActivity {
             Toast.makeText(context, "Errore, non sei abilitato a questa operazione",
                     Toast.LENGTH_SHORT).show();
         }
-
     }
 
-    private void initTable() {
-        tableCartella = findViewById(R.id.tableCartella);
+    private void initTable() 
+    {
+        if (tableCartella == null)
+            return;
+
         TableRow.LayoutParams tableRowParams = new TableRow.LayoutParams();
         tableRowParams.setMargins(30, 20, 20, 10);
         //creo tabella con tanti numeri casuali
@@ -228,11 +267,14 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    private void refreshTable() {
+    private void refreshTable() 
+    {
+        if (tableCartella == null)
+            return;
+
         List<Integer> numeriCartellaLista = userSession.numeriCartellaLista;
         List<Integer> numeriChiamatiLista = userSession.numeriChiamatiLista;
 
-        tableCartella = findViewById(R.id.tableCartella);
         tableCartella.removeAllViews(); //cancello tutto
         TableRow.LayoutParams tableRowParams = new TableRow.LayoutParams();
         tableRowParams.setMargins(30, 20, 20, 10);
@@ -266,7 +308,41 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    public void onClickBingo(View view) {
+    public void onClickBingo(View view) 
+    {
+        Partita p = userSession.getPartita(); //da la partita in corso
+        if (p.giocatori.size() <= 1) {
+            Toast.makeText(context, "ERRORE: Numero giocatori minimo 2!!!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        /*
+        if (userSession.numeriTrovatiInCartellaLista.size() == userSession.numeriCartellaLista.size()) {
+            for (Integer numero : userSession.numeriCartellaLista) {
+                if (userSession.numeriTrovatiInCartellaLista.contains(numero)) {
+                    //fai controllo vittoria
+                    /*for numeri trovati in cartella
+                     * i = numeri estratti cartella
+                     * else hai perso*
+                    Toast.makeText(context, "Hai vinto ", Toast.LENGTH_SHORT).show();
+                    status = "WINNER";
+                    finish();
+                    //mostro activity vittoria
+                    Intent i = new Intent(context, VittoriaActivity.class);
+                    startActivity(i);
+                } else {
+                    Toast.makeText(context, "Hai perso, i numeri non corrispondono ", Toast.LENGTH_SHORT).show();
+                    status = "LOSE";
+                    finish();
+                    //mostro activity di perdita
+                    Intent i = new Intent(context, PerditaActivity.class);
+                    startActivity(i);
+                }
+            }
+        }
+        */
+
+
         if (userSession.numeriTrovatiInCartellaLista.size() == userSession.numeriCartellaLista.size()) {
             Toast.makeText(context, "Hai vinto ", Toast.LENGTH_SHORT).show();
             status = "WINNER";
@@ -287,5 +363,4 @@ public class GameActivity extends AppCompatActivity {
         userSession.numeriTrovatiInCartellaLista.clear();
         userSession.numeriCartellaLista.clear();
     }
-
 }

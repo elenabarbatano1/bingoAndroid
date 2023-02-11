@@ -16,6 +16,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,7 +26,33 @@ public class Common {
         return UUID.randomUUID().toString(); //codice univoco
     }
 
-    public static void caricaPartite(int stato, ProgressBar pbAttesa) { //lo richiamo nella onCreate della mainActivity
+    public static void caricaPartiteInCorso(ProgressBar pbAttesa) { //lo richiamo nella onCreate della mainActivity
+        //LETTURA
+        FirebaseFirestore database = FirebaseFirestore.getInstance();
+        CollectionReference dbPartite = database.collection("Partite");
+
+        //0=avviata, 1=in corso(appena entra un giocatore)
+        dbPartite.whereIn("stato", Arrays.asList(0, 1)).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                List<DocumentSnapshot> partiteLista = queryDocumentSnapshots.getDocuments();
+                List<Partita> listaP = new ArrayList<Partita>();
+                for (DocumentSnapshot d : partiteLista) { //itero sui documenti
+                    Partita p1 = d.toObject(Partita.class);
+                    p1.idPartita = d.getId(); //ci prendiamo l'id della partita
+
+                    listaP.add(p1);
+                }
+                if (pbAttesa != null) {
+                    pbAttesa.setVisibility(View.INVISIBLE);
+                }
+                UserSession.getInstance().partiteLista = listaP; //ci salviamo la lista in modo da non richiare firebase (richiamo la classe e il metodo usersession)
+            }
+        });
+    }
+
+    /*
+    public static void caricaPartiteByStato(int stato, ProgressBar pbAttesa) {
         //LETTURA
         FirebaseFirestore database = FirebaseFirestore.getInstance();
         CollectionReference dbPartite = database.collection("Partite");
@@ -48,6 +75,7 @@ public class Common {
             }
         });
     }
+    */
 
     public static int generateRandom(int min, int max) {
         int val = (int) Math.floor(Math.random() * (max - min + 1) + min);
@@ -80,5 +108,4 @@ public class Common {
             //userSession.partiteLista.remove(p);//svuota la partita in corso
         }
     }
-
 }
