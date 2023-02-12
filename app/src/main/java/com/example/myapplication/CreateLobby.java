@@ -75,7 +75,7 @@ public class CreateLobby extends AppCompatActivity {
         DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         p.dataStart = dt.format(LocalDateTime.now());
         p.idUser = userSession.USER_UID; //id di chi crea la partita
-        p.username = "Miky";
+        //p.username = "Ely";
         p.giocatori.add(p.idUser); //mi salvo i giocatori
         userSession.addPartita(p); //gli settiamo la partita in corso
 

@@ -24,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DashboardActivity extends AppCompatActivity {
@@ -42,36 +43,33 @@ public class DashboardActivity extends AppCompatActivity {
         setTitle("Dashboard");
         setContentView(R.layout.activity_dashboard);
         context = getApplicationContext(); //abbiamo il contesto
-        ProgressBar pbAttesa = findViewById(R.id.pbAttesa);
+
+        pbAttesa = findViewById(R.id.pbAttesa);
 
         // Initialize user session
         userSession = UserSession.getInstance();
         storicoPartiteLista =new ArrayList<Partita>();
-       /* if(userSession.getPartita() == null){ //richiama il carica partite
-            caricaPartite(2, pbAttesa);
-        }else{
-            pbAttesa.setVisibility(View.INVISIBLE);
-        }*/
 
-        //initTable();
-        caricaPartite(2, pbAttesa);
+        caricaStoricoPartite(pbAttesa);
     }
 
-    public void caricaPartite(int stato, ProgressBar pbAttesa) {
+    public void caricaStoricoPartite(ProgressBar pbAttesa) {
         //LETTURA
         FirebaseFirestore database = FirebaseFirestore.getInstance();
         CollectionReference dbPartite = database.collection("Partite");
 
-        dbPartite.whereEqualTo("stato", stato).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+        dbPartite.whereEqualTo("stato", 2).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+        //dbPartite.whereEqualTo("stato", Arrays.asList(-1, 2)).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
             public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
                 List<DocumentSnapshot> partiteLista = queryDocumentSnapshots.getDocuments();
                 List<Partita> listaP = new ArrayList<Partita>();
                 for (DocumentSnapshot d : partiteLista) { //itero sui documenti
-                    Partita p1 = d.toObject(Partita.class);
-                    p1.idPartita = d.getId(); //ci prendiamo l'id della partita
+                    Partita p = d.toObject(Partita.class);
+                    p.idPartita = d.getId(); //ci prendiamo l'id della partita
 
-                    listaP.add(p1);
+                    if (p.giocatori.contains(userSession.USER_UID))
+                        listaP.add(p);
                 }
                 if (pbAttesa != null) {
                     pbAttesa.setVisibility(View.INVISIBLE);
@@ -143,7 +141,10 @@ public class DashboardActivity extends AppCompatActivity {
                 colonna3.setTextColor(Color.BLACK);
                 colonna3.setTextSize(14);
                 //colonna3.setText("0");
-                colonna3.setText(p1.idUserWinner);
+                if (p1.idUserWinner != null)
+                    colonna3.setText(p1.idUserWinner.equals(userSession.USER_UID) ? "Hai vinto" : "Hai perso");
+                else
+                    colonna3.setText("0");
                 riga.addView(colonna3, tableRowParams);
 
                 tableDashboard.addView(riga, tableRowParams);

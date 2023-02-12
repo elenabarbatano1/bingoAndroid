@@ -77,22 +77,18 @@ public class Common {
     }
     */
 
-    public static int generateRandom(int min, int max) {
+    public static int generateRandom(int min, int max)
+    {
         int val = (int) Math.floor(Math.random() * (max - min + 1) + min);
-       /* if(UserSession.getInstance().numeriChiamatiLista.contains(val)){ //controllo se val è già presente se è presente richiamata il metodo
-          return generateRandom(min, max);
-        }*/
         while (UserSession.getInstance().numeriChiamatiLista.contains(val)) {
             val = (int) Math.floor(Math.random() * (max - min + 1) + min);
         }
         return val;
     }
 
-    public static int generateRandomCartella(int min, int max) {
+    public static int generateRandomCartella(int min, int max)
+    {
         int val = (int) Math.floor(Math.random() * (max - min + 1) + min);
-        /*if(UserSession.getInstance().numeriCartellaLista.contains(val)){ //controllo se val è già presente se è presente richiamata il metodo
-            return generateRandom(min, max);
-        }*/
         while (UserSession.getInstance().numeriCartellaLista.contains(val)) {
             val = (int) Math.floor(Math.random() * (max - min + 1) + min);
         }
@@ -107,5 +103,30 @@ public class Common {
             dbPartite.document(p.idPartita).set(p);
             //userSession.partiteLista.remove(p);//svuota la partita in corso
         }
+    }
+
+    public static String getWinnerId(Partita p, String currentUserId) 
+    {
+        for (String userId : p.giocatori) {
+            if (!userId.equals(currentUserId))
+                return userId;
+        }
+
+        return ""; //currentUserId;
+    }
+
+    public static boolean verificaScheda() 
+    {
+        UserSession userSession = UserSession.getInstance();
+        int trovato_count = 0;
+        if (userSession.numeriTrovatiInCartellaLista.size() == userSession.numeriCartellaLista.size()) {
+            for (Integer numero : userSession.numeriCartellaLista) {
+                if (userSession.numeriTrovatiInCartellaLista.contains(numero)) {
+                    trovato_count++;
+                }
+            }
+        }
+
+        return trovato_count == userSession.numeriCartellaLista.size();
     }
 }

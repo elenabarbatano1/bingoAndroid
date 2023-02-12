@@ -28,19 +28,17 @@ public class VittoriaActivity extends AppCompatActivity {
         setContentView(R.layout.activity_vittoria);
         userSession = UserSession.getInstance();
         context = getApplicationContext(); //abbiamo il contesto
-        update();
+        //update();
     }
     public void onClickHome(View view) {
         Intent i = new Intent(context, MainActivity.class);
         startActivity(i);
     }
-
+    /*
     @TargetApi(Build.VERSION_CODES.O)
     public void update() {
-
         Partita p = userSession.getPartita(); //ci da la partita in corso
         if(p != null) {
-
             DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
             p.dataEnd = dt.format(LocalDateTime.now()); //cambiamo data
             p.stato = 2; //cambiamo stato
@@ -49,4 +47,5 @@ public class VittoriaActivity extends AppCompatActivity {
             Common.updatePartita(p);
         }
     }
+    */
 }

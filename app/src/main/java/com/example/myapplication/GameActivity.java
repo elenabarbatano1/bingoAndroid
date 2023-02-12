@@ -45,7 +45,7 @@ public class GameActivity extends AppCompatActivity {
     private Button btnBingo;
     private TextView textViewNumeroEstratto;
     private TextView textViewStatus;
-
+    private Partita partitaInCorso;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,8 +60,9 @@ public class GameActivity extends AppCompatActivity {
         } else {
             setContentView(R.layout.activity_game);
             Partita p = userSession.getPartita();
+            p.stato = 1;
             boolean aggiunto = p.addGiocatore(userSession.USER_UID); //risposta del metodo
-            if(aggiunto){
+            if(aggiunto) {
                 Common.updatePartita(p);
             }
         }
@@ -82,6 +83,7 @@ public class GameActivity extends AppCompatActivity {
         initTable();
 
         Partita p = userSession.getPartita();
+        partitaInCorso = p;
         //Listener della vittoria o perdita
         FirebaseFirestore database = FirebaseFirestore.getInstance();
         DocumentReference docRef = database.collection("Partite").document(p.idPartita);
@@ -94,13 +96,17 @@ public class GameActivity extends AppCompatActivity {
                     return;
                 }
 
-                if (snapshot != null && snapshot.exists() && status == "") {
-                    Partita partitaInCorso = snapshot.toObject(Partita.class);
+                //Toast.makeText(context, "onEvent: status: "+status, Toast.LENGTH_LONG).show();
+                if (snapshot != null && snapshot.exists() && status == null) {
+                    partitaInCorso = snapshot.toObject(Partita.class);
                     //System.out.println("Current data: " + snapshot.getData()); //manda tutto il documento o quello modificato
-                   // Toast.makeText(context, "onEvent: "+partitaInCorso.idUserWinner, Toast.LENGTH_LONG).show();
-                    if(partitaInCorso.stato == 2){
+                    //Toast.makeText(context, "onEvent: "+partitaInCorso.stato, Toast.LENGTH_LONG).show();
+                    if(partitaInCorso.stato == 2) {
                         if(userSession.USER_UID.equals(partitaInCorso.idUserWinner)){
                             finish();
+                            partitaInCorso.idUserWinner = userSession.USER_UID;
+                            Common.updatePartita(partitaInCorso);
+
                             //mostro activity vittoria
                             Intent i = new Intent(context, VittoriaActivity.class);
                             startActivity(i);
@@ -110,6 +116,25 @@ public class GameActivity extends AppCompatActivity {
                             Intent i = new Intent(context, PerditaActivity.class);
                             startActivity(i);
                         }
+                    } else if(partitaInCorso.stato == -1) {
+                        finish();
+                        /*
+                        status = "WINNER";
+                        //DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                        //partitaInCorso.dataEnd = dt.format(LocalDateTime.now()); //cambiamo data
+                        //partitaInCorso.stato = -1; //cambiamo stato
+                        partitaInCorso.idUserWinner = userSession.USER_UID;
+                        Common.updatePartita(partitaInCorso);
+
+                        //mostro activity vittoria
+                        Intent i = new Intent(context, VittoriaActivity.class);
+                        startActivity(i);
+                        */
+
+                        //Intent i = new Intent(context, PerditaActivity222.class);
+                        Intent i = new Intent(context, RegoleActivity.class);
+                        startActivity(i);
+
                     } else if(!userSession.isAdmin() && partitaInCorso.numeroEstratto > 0){
                         int val = partitaInCorso.numeroEstratto;
                         textViewNumeroEstratto.setText(""+ val);
@@ -155,7 +180,7 @@ public class GameActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        Partita p = userSession.getPartita(); //da la partita in corso
+        Partita p = partitaInCorso; //userSession.getPartita(); //da la partita in corso
         if (p.giocatori.size() <= 1) {
             //finish();
             super.onBackPressed();
@@ -173,6 +198,7 @@ public class GameActivity extends AppCompatActivity {
 
                 //Partita p = userSession.getPartita(); //ci da la partita in corso
                 if (p != null) {
+                    status = "LOSE";
                     DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
                     p.dataEnd = dt.format(LocalDateTime.now()); //cambiamo data
                     p.stato = -1; //cambiamo stato
@@ -193,7 +219,7 @@ public class GameActivity extends AppCompatActivity {
 
     public void onClickHome(View view)
     {
-        Partita p = userSession.getPartita(); //da la partita in corso
+        Partita p = partitaInCorso; //userSession.getPartita(); //da la partita in corso
         if (p.giocatori.size() > 1) {
             onBackPressed();
             return;
@@ -214,7 +240,7 @@ public class GameActivity extends AppCompatActivity {
                 refreshTable();
 
                 //lancio update di firebase
-                Partita p = userSession.getPartita(); //da la partita in corso
+                Partita p = partitaInCorso; //userSession.getPartita(); //da la partita in corso
                 p.numeroEstratto = val;
                 if(val > 0){
                     Common.updatePartita(p);
@@ -310,42 +336,22 @@ public class GameActivity extends AppCompatActivity {
 
     public void onClickBingo(View view) 
     {
-        Partita p = userSession.getPartita(); //da la partita in corso
+        Partita p = partitaInCorso; //userSession.getPartita(); //da la partita in corso
         if (p.giocatori.size() <= 1) {
             Toast.makeText(context, "ERRORE: Numero giocatori minimo 2!!!", Toast.LENGTH_LONG).show();
             return;
         }
 
-        /*
-        if (userSession.numeriTrovatiInCartellaLista.size() == userSession.numeriCartellaLista.size()) {
-            for (Integer numero : userSession.numeriCartellaLista) {
-                if (userSession.numeriTrovatiInCartellaLista.contains(numero)) {
-                    //fai controllo vittoria
-                    /*for numeri trovati in cartella
-                     * i = numeri estratti cartella
-                     * else hai perso*
-                    Toast.makeText(context, "Hai vinto ", Toast.LENGTH_SHORT).show();
-                    status = "WINNER";
-                    finish();
-                    //mostro activity vittoria
-                    Intent i = new Intent(context, VittoriaActivity.class);
-                    startActivity(i);
-                } else {
-                    Toast.makeText(context, "Hai perso, i numeri non corrispondono ", Toast.LENGTH_SHORT).show();
-                    status = "LOSE";
-                    finish();
-                    //mostro activity di perdita
-                    Intent i = new Intent(context, PerditaActivity.class);
-                    startActivity(i);
-                }
-            }
-        }
-        */
-
-
-        if (userSession.numeriTrovatiInCartellaLista.size() == userSession.numeriCartellaLista.size()) {
+        if (Common.verificaScheda()) {
             Toast.makeText(context, "Hai vinto ", Toast.LENGTH_SHORT).show();
             status = "WINNER";
+
+            DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            partitaInCorso.dataEnd = dt.format(LocalDateTime.now()); //cambiamo data
+            partitaInCorso.stato = 2; //cambiamo stato
+            partitaInCorso.idUserWinner = userSession.USER_UID;
+            Common.updatePartita(partitaInCorso);
+
             finish();
             //mostro activity vittoria
             Intent i = new Intent(context, VittoriaActivity.class);
@@ -354,6 +360,15 @@ public class GameActivity extends AppCompatActivity {
             //mostro errore
             Toast.makeText(context, "Hai perso ", Toast.LENGTH_SHORT).show();
             status = "LOSE";
+
+            DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            partitaInCorso.dataEnd = dt.format(LocalDateTime.now()); //cambiamo data
+            partitaInCorso.stato = 2; //cambiamo stato
+            //if (partitaInCorso.giocatori.size() > 1)
+                //partitaInCorso.idUserWinner = userSession.isAdmin() ? userSession.USER_UID : p.idUser;
+            partitaInCorso.idUserWinner = Common.getWinnerId(partitaInCorso, userSession.USER_UID);
+            Common.updatePartita(partitaInCorso);
+
             finish();
             //mostro activity di perdita
             Intent i = new Intent(context, PerditaActivity.class);

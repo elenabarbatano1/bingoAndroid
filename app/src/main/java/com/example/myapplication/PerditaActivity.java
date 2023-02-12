@@ -37,7 +37,7 @@ public class PerditaActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         userSession = UserSession.getInstance();
         context = getApplicationContext(); //abbiamo il contesto
-        update();
+        //update();
     }
 
     public void onClickHome(View view) {
@@ -45,6 +45,7 @@ public class PerditaActivity extends AppCompatActivity {
         startActivity(i);
     }
 
+    /*
     @TargetApi(Build.VERSION_CODES.O)
     public void update() {
         Partita p = userSession.getPartita(); //ci da la partita in corso
@@ -58,4 +59,5 @@ public class PerditaActivity extends AppCompatActivity {
             Common.updatePartita(p);
         }
     }
+    */
 }

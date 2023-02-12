@@ -20,9 +20,14 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -41,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnDashboard;
     private TextView textViewTitolobingo;
     private ProgressBar pbAttesa;
+    private Partita partitaInCorso;
     
     //private String Uid;
     //private GlobalConstant global= GlobalConstant.getInstance();
@@ -63,6 +69,42 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Common.caricaPartiteInCorso(pbAttesa);
+
+        // Listener creazione nuova partita!
+        FirebaseFirestore database = FirebaseFirestore.getInstance();
+        database.collection("Partite")
+                .whereEqualTo("stato", 0)
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot snapshots,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            Log.w(TAG, "listen:error", e);
+                            return;
+                        }
+
+                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                            switch (dc.getType()) {
+                                case ADDED:
+                                    partitaInCorso = dc.getDocument().toObject(Partita.class);
+                                    Log.d(TAG, "Nuova partita: " + dc.getDocument().getData());
+
+                                    Common.caricaPartiteInCorso(pbAttesa);
+
+                                    Toast.makeText(context, "E' stata aggiunta una nova partita!", Toast.LENGTH_SHORT).show();
+
+                                    break;
+                                case MODIFIED:
+                                    Log.d(TAG, "Partita modificata: " + dc.getDocument().getData());
+                                    break;
+                                case REMOVED:
+                                    Log.d(TAG, "Partita rimossa: " + dc.getDocument().getData());
+                                    break;
+                            }
+                        }
+
+                    }
+                });
     }
 
     //metodo per il login dell'utente, non serve nome e password
